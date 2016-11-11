@@ -54,7 +54,7 @@ void time_analysis::inc_all(float aug)
 void time_analysis::print()
 {
 	cout<<"-------------running status-------------"<<endl;
-        cout<<"initialization "<<t_init<<" ("<<(t_init/(t_gen+t_sup+t_init))<<"%)"
+    cout<<"initialization "<<t_init<<" ("<<(t_init/(t_gen+t_sup+t_init))<<"%)";
 	cout<<"candidate generation "<<t_gen<<" ("<<(t_gen/(t_gen+t_sup+t_init))<<"%)"<<endl;
 	cout<<"support counting "<<t_sup<<" ("<<(t_sup/(t_gen+t_sup+t_init))<<"%)"<<endl;
 }

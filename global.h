@@ -36,6 +36,7 @@ extern float time_expansion;
 
 extern candidate_collection cc[MAX_CORE];
 extern candidate_collection cc_pre;
+extern new_candidate_collection cand_coll;
 
 using namespace std;
 

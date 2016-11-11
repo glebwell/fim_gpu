@@ -86,50 +86,71 @@ void frontier_stack::expand_gpu(int size, int thread_id) {
   int accu_size = 0;
   int vlist_len_int;
   bool add_flag = false;
-  time_t begin, end;
-  time_t begin_a, end_a;
-
-  static int new_count = 0;
   
   vlist_len_int = frontier_node::vlist_len_int_16;
   lug.clear();
 
   cursor_current = stack_pointer - 1;
 
-  while (true) {
+  while (true)
+  {
 
-    if (cursor_current < base) {
-      if (dst_list_len > 0) {
+    if (cursor_current < base)
+    {
+      if (dst_list_len > 0)
+      {
         es = END_DLIST_NONEMPTY;
         break;
-      } else {
+      } else
+      {
         es = END_DLIST_EMPTY;
         break;
       }
-    } else if (accu_size > size) {
+    }
+    else if (accu_size > size)
+    {
       es = REACH_EXPANDING_LIMIT;
       accu_size = 0;
       break;
-    } else if (*(cursor_current) == NULL) {
+    }
+    else if (*(cursor_current) == NULL)
+    {
       cursor_current--;
-    } else {
+    }
+    else
+    {
       es = EXPANDING;
       current_node = *cursor_current;
       add_flag = false;
       for (cursor_next = cursor_current - 1;
-           (*cursor_next) != NULL && cursor_next > base; cursor_next--) {
+           (*cursor_next) != NULL && cursor_next > base; cursor_next--)
+      {
         next_node = (*cursor_next);
 
         tmp_node = new frontier_node;
 
-        memcpy((void *)tmp_node->candidate, (void *)current_node->candidate,
-               sizeof(unsigned int)*current_node->candidate_len);
-
+        //memcpy((void *)tmp_node->candidate, (void *)current_node->candidate,
+               //sizeof(unsigned int)*current_node->candidate_len);
+        for (k = 0; k < current_node->candidate_len; k++)
+        {
+          tmp_node->candidate[k] = current_node->candidate[k];
+        }
         tmp_node->candidate[k] = next_node->candidate[k - 1];
         tmp_node->candidate_len = k + 1;
 
         tmp_node->alloc_vlist_gpu(gmc);
         dst_list[dst_list_len++] = tmp_node;
+        /*
+        std::cout << "-------------- dest list -------------" << "\n";
+        std::cout << "candidates: ";
+
+        for (unsigned int c = 0; c < tmp_node->candidate_len;++c )
+        {
+            std::cout << tmp_node->candidate[c] << " ";
+        }
+        std::cout << "\n";
+        std::cout << "-------- end of dest list ------------" << "\n";
+        */
         lug.add_to_tail(current_node->vlist_mem_ref.g_addr,
                         next_node->vlist_mem_ref.g_addr,
                         tmp_node->vlist_mem_ref.g_addr);
@@ -137,7 +158,8 @@ void frontier_stack::expand_gpu(int size, int thread_id) {
         accu_size++;
         add_flag = true;
       }
-      if (add_flag == true) {
+      if (add_flag == true)
+      {
         dst_list[dst_list_len++] = NULL;
       }
       cursor_current--;
@@ -165,15 +187,26 @@ void frontier_stack::expand_gpu(int size, int thread_id) {
     }
   }
 
-  if (dst_list_len != 0) {
+  if (dst_list_len != 0)
+  {
     *(stack_pointer++) = dst_list[dst_list_len - 1];
-    for (i = dst_list_len - 2; i >= 0; i--) {
-      if (dst_list[i] == NULL) {
+    for (i = dst_list_len - 2; i >= 0; i--)
+    {
+      if (dst_list[i] == NULL)
+      {
         if (*(stack_pointer - 1) != NULL)
           *(stack_pointer++) = dst_list[i];
-      } else if (dst_list[i]->support >= support_ratio * data_size) {
-        *(stack_pointer++) = dst_list[i];
-      } else {
+      }
+      else if (dst_list[i]->support >= support_ratio * data_size)
+      {
+         frontier_node* fn_to_save = new frontier_node;
+         *fn_to_save = *dst_list[i];
+         *(stack_pointer++) = dst_list[i];
+         //cc_pre[fn_to_save] = ((float)(fn_to_save->support)) / data_size;
+         cand_coll.store(fn_to_save, ((float)(fn_to_save->support)) / data_size);
+      }
+      else
+      {
         dst_list[i]->free_vlist_gpu(gmc);
         delete dst_list[i];
       }
@@ -264,20 +297,30 @@ void frontier_stack::expand_cpu(int size, int thread_id) {
     }
   }
 
-  if (dst_list_len != 0) {
+  if (dst_list_len != 0)
+  {
     *(stack_pointer++) = dst_list[dst_list_len - 1];
 
-  for (i = dst_list_len - 2; i >= 0;i--) {
-    if (dst_list[i] == NULL) {
-      if (*(stack_pointer - 1) != NULL)
-        *(stack_pointer++) = dst_list[i];
-      } else if (dst_list[i]->support >=
-                     support_ratio * data_size) {
-        *(stack_pointer++)=dst_list[i];
-      } else {
-        dst_list[i]->free_vlist_cpu(cmc);
-        delete dst_list[i];
-      }
+    for (i = dst_list_len - 2; i >= 0;i--)
+    {
+        if (dst_list[i] == NULL)
+        {
+            if (*(stack_pointer - 1) != NULL)
+                *(stack_pointer++) = dst_list[i];
+        }
+        else if (dst_list[i]->support >= support_ratio * data_size)
+        {
+            frontier_node* fn_to_save = new frontier_node;
+            *fn_to_save = *dst_list[i];
+            *(stack_pointer++) = dst_list[i];
+            //cc_pre[fn_to_save] = ((float)(fn_to_save->support)) / data_size;
+            cand_coll.store(fn_to_save, ((float)(fn_to_save->support)) / data_size);
+        }
+        else
+        {
+            dst_list[i]->free_vlist_cpu(cmc);
+            delete dst_list[i];
+        }
     }
   }
 }

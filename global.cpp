@@ -14,6 +14,7 @@ float time_expansion = 0;
 
 candidate_collection cc[MAX_CORE];
 candidate_collection cc_pre;
+new_candidate_collection cand_coll;
 
 void set_bit(unsigned int * vlist, int index, int data) {
   int seg = index / (sizeof(unsigned int) * 8);
