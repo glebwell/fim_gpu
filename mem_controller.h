@@ -5,9 +5,9 @@
 #ifndef _GPU_MEM_CONTROLLER_
 #define _GPU_MEM_CONTROLLER_
 
-#include "list"
-#include "cstdlib"
-#include "pthread.h"
+#include <list>
+#include <cstdlib>
+#include <pthread.h>
 
 using namespace std;
 

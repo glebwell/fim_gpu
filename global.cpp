@@ -12,9 +12,7 @@ float time_candidate_generation = 0;
 float time_init = 0;
 float time_expansion = 0;
 
-candidate_collection cc[MAX_CORE];
-candidate_collection cc_pre;
-new_candidate_collection cand_coll;
+candidate_collection cand_coll;
 
 void set_bit(unsigned int * vlist, int index, int data) {
   int seg = index / (sizeof(unsigned int) * 8);
@@ -51,49 +49,3 @@ int bitcnt(unsigned int src) {
   return src;
 }
 
-bool test_candidate(unsigned int * candidate, int candidate_len) {
-  int i = 0;
-  for (i = 1; i < candidate_len; i++) {
-    if (candidate[i] <= candidate[i-1])
-      return false;
-  }
-  return true;
-}
-
-bool test_sibling(unsigned int * c1, int c1_len, unsigned int * c2, int c2_len) {
-  int i;
-  if (c1_len != c2_len)
-    return false;
-
-  for (i = 0; i < c1_len - 1; i++) {
-    if (c1[i] != c2[i])
-      return false;
-  }
-  return true;
-}
-
-int calc_support(vector<vector<int> > & data, unsigned int * candidate, int candidate_len) {
-  int i, j, k, size = 0;
-  int sup = 0;
-
-  bool isfind = false;
-
-  for (i = 0;i < data.size(); i++) {
-    isfind = true;
-    for (j = 1;j < candidate_len; j++) {
-      for (k = 0; k < data[i].size(); k++) {
-        if (candidate[j] == data[i][k]) {
-          break;
-        }
-      }
-      if (k >= data[i].size()) {
-        isfind = false;
-        break;
-      }
-    }
-    if (isfind == true) {
-      sup++;
-    }  
-  }
-  return sup;
-}

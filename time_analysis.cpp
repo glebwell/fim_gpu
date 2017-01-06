@@ -18,8 +18,8 @@ time_analysis::time_analysis()
 	t_datatrans=0;
 	t_gen=0;
 	t_sup=0;
-        t_all=0;
-        fim_num=0;
+    t_all=0;
+    fim_num=0;
 }
 
 void time_analysis::inc_init(float aug)

@@ -1,11 +1,11 @@
-#include "cuda.h"
-#include "cstdio"
+#include <cuda.h>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+
 #include "gpu_interface.h"
 #include "mem_controller.h"
-#include "vector"
-#include "iostream"
 #include "global.h"
-#include "iostream"
 
 using namespace std;
 

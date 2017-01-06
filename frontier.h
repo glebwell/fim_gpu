@@ -8,15 +8,16 @@
 #ifndef FRONTIER_H_
 #define FRONTIER_H_
 
-#include "vector"
-#include "pthread.h"
-#include "sched.h"
+#include <vector>
+#include <pthread.h>
+#include <sched.h>
 
 #include "frontier_node.h"
-#include "mem_controller.h"
 #include "gpu_interface.h"
 #include "cpu_interface.h"
-#include "data_interface.h"
+
+class CPUMemPool;
+class GPUMemPool;
 
 using namespace std;
 

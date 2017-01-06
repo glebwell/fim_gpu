@@ -8,10 +8,11 @@
 #ifndef JOB_MANAGER_H_
 #define JOB_MANAGER_H_
 
+#include <pthread.h>
+#include <sched.h>
+
 #include "frontier.h"
 #include "frontier_preexpand.h"
-#include "pthread.h"
-#include "sched.h"
 
 typedef enum{BEFORE_PRODUCING,PRODUCING,AFTER_PRODUCING} jm_status;
 

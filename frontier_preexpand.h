@@ -1,10 +1,15 @@
 #ifndef FRONTIER_PREEXPAND_H_
 #define FRONTIER_PREEXPAND_H_
 
-#include "frontier_node.h"
+#include <vector>
+#include <string>
+
 #include "mem_controller.h"
-#include "data_interface.h"
-#include "job_manager.h"
+
+class frontier_node;
+class CPUMemPool;
+class GPUMemPool;
+class job_manager;
 
 class frontier_preexpand {
  public:
@@ -16,8 +21,9 @@ class frontier_preexpand {
 
   int fim_num;
   float support_ratio;
-
-  void pre_expand_init(CPUMemPool *pcmc, string file, float min_sup);
+  static std::vector<int> transaction_classes;
+  static unsigned char classes_amount;
+  void pre_expand_init(CPUMemPool *pcmc, const std::string& file, const string &class_file, float min_sup);
 
   void produce_jobs(job_manager &jm, int threshold);
   void produce_jobs_compact(job_manager &jm);

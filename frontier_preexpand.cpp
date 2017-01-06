@@ -1,13 +1,20 @@
-#include "frontier_preexpand.h"
+#include <iostream>
+#include <map>
+#include <fstream>
+#include <unistd.h>
+#include <set>
 
 #include "global.h"
-#include "iostream"
-#include "map"
-#include "fstream"
-#include "unistd.h"
+#include "frontier_node.h"
+#include "frontier_preexpand.h"
+#include "job_manager.h"
 
 using namespace std;
-void frontier_preexpand::pre_expand_init(CPUMemPool* pcmc, string file, float min_sup)
+
+vector<int> frontier_preexpand::transaction_classes;
+unsigned char frontier_preexpand::classes_amount;
+
+void frontier_preexpand::pre_expand_init(CPUMemPool* pcmc, const string &file, const string& class_file, float min_sup)
 {
     int i = 0, j = 0;
     cmc = pcmc;
@@ -20,9 +27,8 @@ void frontier_preexpand::pre_expand_init(CPUMemPool* pcmc, string file, float mi
     vector<int> vec_zero;
     int trans_num = 0, candidate_num = 0;
     string data_tmp;
-    ifstream if_data;
+    ifstream if_data(file.c_str());
 
-    if_data.open(file.c_str());
     if (!if_data.is_open())
     {
         cerr <<" Error in reading file" << endl;
@@ -90,6 +96,31 @@ void frontier_preexpand::pre_expand_init(CPUMemPool* pcmc, string file, float mi
 
     data_size = trans_num - 1;
 
+    ifstream if_classes(class_file.c_str());
+
+    if (!if_classes.is_open())
+    {
+        cerr <<" Error in reading classes file" << endl;
+        exit(1);
+    }
+
+    std::set<int> set_of_classes;
+
+    transaction_classes.reserve(data_size);
+
+    while (!if_classes.eof())
+    {
+        std::getline(if_classes,data_tmp);
+        if (!data_tmp.empty())
+        {
+            transaction_classes.emplace_back(std::stoi(data_tmp));
+            set_of_classes.insert(transaction_classes.back());
+        }
+    }
+
+
+    classes_amount = set_of_classes.size();
+
     frontier_node::vlist_len = data_size;
     frontier_node::vlist_len_int = (frontier_node::vlist_len + 31) / 32;
     frontier_node::vlist_len_int_16 = ((frontier_node::vlist_len_int + 15) / 16) * 16;
@@ -116,6 +147,7 @@ void frontier_preexpand::pre_expand_init(CPUMemPool* pcmc, string file, float mi
     base = (frontier_node**)malloc(sizeof(frontier_node*) * candidate_num);
     stack_pointer = base + candidate_num - 1;
 
+    std::vector<int> trans_vec;
     for (fti = freq_tracer.begin(); fti != freq_tracer.end(); fti++)
     {
         *(stack_pointer) = new frontier_node;
@@ -129,9 +161,13 @@ void frontier_preexpand::pre_expand_init(CPUMemPool* pcmc, string file, float mi
           {
             (*stack_pointer)->alloc_vlist_cpu(cmc);
           }
+          trans_vec.push_back(fti->second[j]);
           set_bit((*stack_pointer)->vlist_mem_ref.c_addr, fti->second[j], 1); // fti->second[j] - transaction number
         }
+        (*stack_pointer)->calculate_distribution(trans_vec);
+        (*stack_pointer)->calculate_quality();
         stack_pointer--;
+        trans_vec.clear();
     };
     (*stack_pointer) = NULL;
     stack_pointer = base + candidate_num;
@@ -235,6 +271,12 @@ void frontier_preexpand::produce_jobs(job_manager &jm, int threshold)
             if (tmp_node->support >= data_size * support_ratio)
             {
               *(current_stack->stack_pointer++) = tmp_node;
+              tmp_node->calculate_distribution();
+              tmp_node->calculate_quality();
+              frontier_node* fn_to_save = new frontier_node;
+              *fn_to_save = *tmp_node;
+              // store 2-element candidates
+              cand_coll.store(fn_to_save, ((float)(fn_to_save->support)) / data_size);
               add_flag = true;
               local_intensity++;
             }

@@ -33,17 +33,13 @@ cuda_add_executable(
 	global.cpp
 	global.h
 	gpu_interface.cu
-	gpu_interface.h       
-	data_interface.cpp                 
-	data_interface.h                   
+	gpu_interface.h                      
 	frontier.cpp              
 	frontier.h
-	time_analysis.cpp
-	time_analysis.h
 	job_manager.cpp
 	job_manager.h
-        rule_generator.cpp
-        rule_generator.h
+	time_analysis.cpp
+	time_analysis.h
 	main.cpp
 )
 

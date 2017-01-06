@@ -1,11 +1,12 @@
-#include "mem_controller.h"
-#include "cuda_runtime.h"
+#include <cuda_runtime.h>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <unistd.h>
+#include <sys/sysinfo.h>
+
 #include "global.h"
-#include "cstdlib"
-#include "cstring"
-#include "iostream"
-#include "unistd.h"
-#include "sys/sysinfo.h"
+#include "mem_controller.h"
 
 using namespace std;
 

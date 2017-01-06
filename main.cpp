@@ -1,24 +1,21 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <pthread.h>
+#include <sched.h>
+#include <errno.h>
+#include <time.h>
+#include <cstring>
+#include <unistd.h>
+#include <cuda_runtime.h>
+
 #include "frontier.h"
-#include "iostream"
-#include "vector"
-#include "string"
-#include "omp.h"
-#include "pthread.h"
-#include "sched.h"
-#include "errno.h"
-#include "time.h"
-#include "cstring"
 #include "gpu_interface.h"
 #include "cpu_interface.h"
 #include "mem_controller.h"
 #include "data_interface.h"
 #include "job_manager.h"
-#include "cuda_runtime.h"
-#include "time_analysis.h"
 #include "global.h"
-#include "unistd.h"
-
-#include "rule_generator.h"
 
 using namespace std;
 
@@ -137,7 +134,7 @@ void* thread(void* param)
     return NULL;
 }
 
-int fim_thread(string in_file_name, string out_file_name,
+int fim_thread(const string& in_file_name, const string& class_file, const string& out_file_name,
                float support_ratio, int gpu_num, int cpu_num, float conf)
 {
     pthread_t id[MAX_CORE];
@@ -170,7 +167,7 @@ int fim_thread(string in_file_name, string out_file_name,
 
     cout << "Candidate preexpansion" << endl;
 
-    fp.pre_expand_init(&cmc_pre_expand, in_file_name, support_ratio);
+    fp.pre_expand_init(&cmc_pre_expand, in_file_name, class_file, support_ratio);
     end = clock();
     time_init += (float)(end - begin);
     cout << "Starting multi-thread FIM, number of gpu threads = "
@@ -202,17 +199,13 @@ int fim_thread(string in_file_name, string out_file_name,
     {
         pthread_join(id[i], NULL);
     }
-    //cc_pre.print_candidate(out_file_name);
+
+    //print results to file
+
     cand_coll.print_candidates(out_file_name);
-    rule_generator g(conf, cand_coll);
-    g.generate();
-    g.append_rules_to_file(out_file_name);
-    /*
-    for (i = 0; i < thread_num; i++)
-    {
-        cc[i].append_candidate(out_file_name);
-    }
-    */
+    cand_coll.filter_candidates_by_quality(conf);
+    cand_coll.append_rules_to_file(out_file_name);
+
     cout << "Number of frequent itemsets: " << jm.fim_num << endl;
 
     time_candidate_generation = time_expansion - time_support_counting;
@@ -222,28 +215,39 @@ int fim_thread(string in_file_name, string out_file_name,
        << (time_candidate_generation / CLOCKS_PER_SEC) << "s" << endl;
     cout << "Time of support counting: "
        << (time_support_counting / CLOCKS_PER_SEC) << "s" << endl;
+
+    cout << "Total rules: " << cand_coll.get_map().size()
+         << " avg_quality = " << cand_coll.get_average_quality()
+         << " max_quality = " << cand_coll.get_max_quality()
+         << "\n";
+
+    float database_coverage = frontier_node::covered_transactions_set.size() / (float) fp.data_size;
+    cout << "[" << frontier_node::covered_transactions_set.size() << ", " << fp.data_size << "]\n";
+    cout << "Database coverage: " << database_coverage * 100 << "%\n";
     return 0;
 }
 
 int main(int argc, char ** argv) {
-    string in_file, out_file;
+    string in_file, out_file, class_file;
     int gpu_num, cpu_num;
     float minsup, conf;
-    if (argc != 7)
+    if (argc != 8)
     {
-        cout << "Usage : <program> <input> <output> min_sup(%) gpu_num cpu_num conf"
+        cout << "Usage : <program> <data_filename> <classes_filename> <output_filename> min_sup(%) conf gpu_num cpu_num"
              << endl;
         return 0;
     }
     in_file = argv[1];
-    out_file = argv[2];
-    minsup = (atof(argv[3])) / 100;
-    gpu_num = atoi(argv[4]);
-    cpu_num = atoi(argv[5]);
-    conf = (atof(argv[6])) / 100;
+    class_file = argv[2];
+    out_file = argv[3];
+    minsup = (atof(argv[4])) / 100;
+    conf = (atof(argv[5])) / 100;
+    gpu_num = atoi(argv[6]);
+    cpu_num = atoi(argv[7]);
+
 
     cout << "Starting fim_frontier_expansion, number of gpu = "
        << gpu_num << " , number of cpu = " << cpu_num << endl;
 
-    return fim_thread(in_file, out_file, minsup, gpu_num, cpu_num, conf);
+    return fim_thread(in_file, class_file, out_file, minsup, gpu_num, cpu_num, conf);
 }

@@ -1,14 +1,14 @@
+#include <cuda_runtime.h>
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <cstring>
+
 #include "frontier.h"
 #include "gpu_interface.h"
 #include "global.h"
-
-#include "cuda_runtime.h"
-#include "string"
-#include "fstream"
-#include "iostream"
-#include "ctime"
-#include "cstdlib"
-#include "cstring"
 
 using namespace std;
 
@@ -200,7 +200,10 @@ void frontier_stack::expand_gpu(int size, int thread_id) {
       else if (dst_list[i]->support >= support_ratio * data_size)
       {
          frontier_node* fn_to_save = new frontier_node;
-         *fn_to_save = *dst_list[i];
+         fn_to_save->copy_vlist_gtoc_from_other_frontier_node(cmc, dst_list[i]);
+         // calculate quality
+         fn_to_save->calculate_distribution();
+         fn_to_save->calculate_quality();
          *(stack_pointer++) = dst_list[i];
          //cc_pre[fn_to_save] = ((float)(fn_to_save->support)) / data_size;
          cand_coll.store(fn_to_save, ((float)(fn_to_save->support)) / data_size);
@@ -275,6 +278,8 @@ void frontier_stack::expand_cpu(int size, int thread_id) {
             next_node->vlist_mem_ref.c_addr,
             tmp_node->vlist_mem_ref.c_addr,
             tmp_node->support, frontier_node::vlist_len_int);
+        tmp_node->calculate_distribution();
+        tmp_node->calculate_quality();
         end = clock();
         time_support_counting += (float)(end - begin);
         accu_size++;
@@ -312,7 +317,10 @@ void frontier_stack::expand_cpu(int size, int thread_id) {
         {
             frontier_node* fn_to_save = new frontier_node;
             *fn_to_save = *dst_list[i];
+            //fn_to_save->calculate_distribution();
+            //fn_to_save->calculate_quality();
             *(stack_pointer++) = dst_list[i];
+            // todo calc distribution and quality
             //cc_pre[fn_to_save] = ((float)(fn_to_save->support)) / data_size;
             cand_coll.store(fn_to_save, ((float)(fn_to_save->support)) / data_size);
         }
