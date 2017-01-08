@@ -26,7 +26,6 @@ class frontier_preexpand {
   void pre_expand_init(CPUMemPool *pcmc, const std::string& file, const string &class_file, float min_sup);
 
   void produce_jobs(job_manager &jm, int threshold);
-  void produce_jobs_compact(job_manager &jm);
   void destroy();
   void debug();
 };

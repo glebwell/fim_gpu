@@ -60,7 +60,7 @@ void frontier_stack::transfer_in_cpu(CPUMemPool* new_cmc) {
   vlist_location = MAIN_MEMORY;
 }
 
-int frontier_stack::size() {
+int frontier_stack::size() const {
   int sum = 0;
   frontier_node** p;
   for (p = base; p < stack_pointer; p++) {
@@ -140,17 +140,7 @@ void frontier_stack::expand_gpu(int size, int thread_id) {
 
         tmp_node->alloc_vlist_gpu(gmc);
         dst_list[dst_list_len++] = tmp_node;
-        /*
-        std::cout << "-------------- dest list -------------" << "\n";
-        std::cout << "candidates: ";
 
-        for (unsigned int c = 0; c < tmp_node->candidate_len;++c )
-        {
-            std::cout << tmp_node->candidate[c] << " ";
-        }
-        std::cout << "\n";
-        std::cout << "-------- end of dest list ------------" << "\n";
-        */
         lug.add_to_tail(current_node->vlist_mem_ref.g_addr,
                         next_node->vlist_mem_ref.g_addr,
                         tmp_node->vlist_mem_ref.g_addr);
@@ -237,7 +227,8 @@ void frontier_stack::expand_cpu(int size, int thread_id) {
 
   cursor_current=stack_pointer-1;
 
-  while (true) {
+  while (true)
+  {
     if (cursor_current < base) {
       if (dst_list_len > 0) {
         es = END_DLIST_NONEMPTY;
@@ -259,7 +250,8 @@ void frontier_stack::expand_cpu(int size, int thread_id) {
 
       for (cursor_next = cursor_current - 1; 
           (*cursor_next) != NULL && cursor_next > base;
-          cursor_next--) {
+          cursor_next--)
+      {
 
         next_node=(*cursor_next);
 
@@ -317,11 +309,7 @@ void frontier_stack::expand_cpu(int size, int thread_id) {
         {
             frontier_node* fn_to_save = new frontier_node;
             *fn_to_save = *dst_list[i];
-            //fn_to_save->calculate_distribution();
-            //fn_to_save->calculate_quality();
             *(stack_pointer++) = dst_list[i];
-            // todo calc distribution and quality
-            //cc_pre[fn_to_save] = ((float)(fn_to_save->support)) / data_size;
             cand_coll.store(fn_to_save, ((float)(fn_to_save->support)) / data_size);
         }
         else

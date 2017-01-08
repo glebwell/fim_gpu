@@ -30,7 +30,6 @@ class frontier_stack {
   CPUMemPool* cmc;
   int data_size;
   int fim_num;
-  int epsilon;
   float support_ratio;
   ListUnionGPU lug;
   mem_status vlist_location;
@@ -44,14 +43,10 @@ class frontier_stack {
   void expand_gpu(int size, int thread_id);
   void expand_cpu(int size, int thread_id);
 
-  int size();
-
-  void produce_jobs(job_manager &jm);
+  int size() const;
 
   void destroy();
   void debug();
 };
-
-void split_frontier_stack(frontier_stack & fs_src, frontier_stack * &mfs_dst, int mfs_num);
 
 #endif /* FRONTIER_H_ */
